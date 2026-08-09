@@ -200,6 +200,7 @@
     </div>
     <span class="spacer"></span>
     <button type="button" id="export">Export sheet</button>
+    <button type="button" id="copy">Copy data</button>
     <button type="button" id="import">Import sheet</button>
     <button type="button" id="print">Print</button>
     <button type="button" id="clearall">Clear sheet</button>
@@ -517,11 +518,44 @@ document.getElementById("shots").addEventListener("click", ev=>{
   shot = b.dataset.t;
   document.querySelectorAll("#shots button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
 });
+function downloadJSON(name, text){
+  /* Safari refuses to download from an anchor that isn't in the document, and revoking the
+     object URL in the same tick can cancel the download in Chrome. Both bit us. */
+  const blob = new Blob([text], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); }, 1500);
+}
+
+async function copyJSON(text, btn){
+  const said = msg=>{ const old = btn.textContent; btn.textContent = msg;
+                      setTimeout(()=>{ btn.textContent = old; }, 2200); };
+  try{
+    await navigator.clipboard.writeText(text);
+    said("Copied");
+    return;
+  }catch(e){}
+  /* clipboard is blocked in some embedded views — fall back to a box the coach can select */
+  let box = document.getElementById("datadump");
+  if(!box){
+    box = document.createElement("textarea");
+    box.id = "datadump";
+    box.style.cssText = "width:100%;min-height:120px;margin-top:10px;font-family:var(--mono);font-size:11px";
+    document.querySelector(".toolbar").after(box);
+  }
+  box.value = text; box.focus(); box.select();
+  said("Select all + copy");
+}
+
 document.getElementById("print").addEventListener("click", ()=>window.print());
 document.getElementById("export").addEventListener("click", ()=>{
-  const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
-  const a = el("a"); a.href = URL.createObjectURL(blob);
-  a.download = "6-court-chart.json"; a.click(); URL.revokeObjectURL(a.href);
+  downloadJSON("6-court-chart.json", JSON.stringify(state,null,2));
+});
+document.getElementById("copy").addEventListener("click", ev=>{
+  copyJSON(JSON.stringify(state,null,2), ev.currentTarget);
 });
 document.getElementById("import").addEventListener("click", ()=>{
   const inp = el("input"); inp.type = "file"; inp.accept = "application/json,.json";
