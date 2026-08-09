@@ -1,0 +1,543 @@
+<title>6-Court Chart — Play Boxes with Sets · Defense</title>
+<style>
+  :root{
+    --ground:#edeff1;
+    --panel:#ffffff;
+    --panel-2:#f5f7f8;
+    --line:#c9d0d6;
+    --line-soft:#e2e7ea;
+    --rule:#9aa5ad;
+    --text:#14181d;
+    --text-2:#586269;
+    --text-3:#8a949b;
+    --ours:#1d3557;
+    --floor:#ffffff;
+    --floor-line:#aeb8bf;
+    --hard:#c8102e;
+    --off:#b8791b;
+    --tip:#1f7a70;
+    --player:#1d3557;
+    --focus:#1d3557;
+    --shadow:0 1px 2px rgba(20,30,40,.06), 0 6px 20px rgba(20,30,40,.05);
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0f1317; --panel:#171c22; --panel-2:#1c232a;
+      --line:#2c353e; --line-soft:#232b33; --rule:#4a555e;
+      --text:#e9edf1; --text-2:#a3aeb7; --text-3:#717d86;
+      --ours:#7ba2d8; --floor:#1b2228; --floor-line:#48545e;
+      --hard:#ff5265; --off:#e0a33a; --tip:#3fbfae;
+      --player:#7ba2d8; --focus:#7ba2d8;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.32);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0f1317; --panel:#171c22; --panel-2:#1c232a;
+    --line:#2c353e; --line-soft:#232b33; --rule:#4a555e;
+    --text:#e9edf1; --text-2:#a3aeb7; --text-3:#717d86;
+    --ours:#7ba2d8; --floor:#1b2228; --floor-line:#48545e;
+    --hard:#ff5265; --off:#e0a33a; --tip:#3fbfae;
+    --player:#7ba2d8; --focus:#7ba2d8;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.32);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--ground);color:var(--text);
+    font-family:var(--sans);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased
+  }
+  .wrap{max-width:1400px;margin:0 auto;padding:18px 16px 64px}
+
+  /* ---------- sheet head ---------- */
+  .sheet-hd{
+    display:flex;flex-wrap:wrap;gap:10px 22px;align-items:flex-end;
+    padding-bottom:12px;border-bottom:2px solid var(--text)
+  }
+  .sheet-hd h1{
+    margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em;line-height:1.1;
+    padding-right:8px
+  }
+  .sheet-hd h1 small{display:block;font-size:10.5px;font-weight:500;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--text-3);margin-top:3px}
+  .fld{display:flex;align-items:baseline;gap:6px;font-family:var(--mono);font-size:12px;color:var(--text-2)}
+  .fld input{
+    font:inherit;font-size:13px;color:var(--text);background:transparent;border:0;
+    border-bottom:1px solid var(--rule);padding:1px 3px;min-width:0
+  }
+  .fld input.team{width:11ch}
+  .fld input.date{width:12ch}
+  .games{display:flex;gap:9px;font-family:var(--mono);font-size:12px;color:var(--text-2)}
+  .games label{display:flex;align-items:center;gap:3px;cursor:pointer}
+  .games input{accent-color:var(--ours)}
+
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 16px}
+  button{
+    font:inherit;font-size:12.5px;color:var(--text);background:var(--panel);
+    border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer
+  }
+  button:hover{background:var(--panel-2)}
+  button:focus-visible,input:focus-visible,.cell:focus-visible,.rule:focus-visible,.pl:focus-visible{
+    outline:2px solid var(--focus);outline-offset:1px
+  }
+  .seg{display:flex;gap:5px}
+  .seg button[aria-pressed="true"]{color:#fff;border-color:transparent}
+  .seg button[data-t="hard"][aria-pressed="true"]{background:var(--hard)}
+  .seg button[data-t="off"][aria-pressed="true"]{background:var(--off)}
+  .seg button[data-t="tip"][aria-pressed="true"]{background:var(--tip)}
+  .tool-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)}
+  .spacer{flex:1}
+  .hint{
+    font-family:var(--mono);font-size:11px;color:var(--text-3);margin:0 0 16px;line-height:1.7
+  }
+  .hint b{color:var(--text-2);font-weight:600}
+
+  /* ---------- panels ---------- */
+  .grid{display:grid;gap:16px;grid-template-columns:1fr}
+  @media (min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+  @media (min-width:1300px){.grid{grid-template-columns:1fr 1fr 1fr}}
+
+  .pnl{
+    background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    box-shadow:var(--shadow);padding:12px;display:flex;flex-direction:column;gap:10px
+  }
+  .pnl-hd{display:flex;align-items:center;gap:8px}
+  .rot{
+    font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ours);
+    background:transparent;border:0;border-bottom:1px solid var(--rule);width:4.5ch;padding:0 2px
+  }
+  .pnl-hd .fld{margin-left:auto}
+  .pnl-hd .fld input{width:7ch}
+
+  .hd-row{display:flex;gap:9px;align-items:stretch}
+  .rules{display:flex;flex-direction:column;gap:0;flex:1;min-width:0}
+  .servebox{
+    width:88px;flex:0 0 88px;border:1px solid var(--text);display:flex;flex-direction:column
+  }
+  .servebox .sv{
+    flex:1;min-height:26px;font-family:var(--mono);font-size:11px;text-align:center;padding:2px;
+    border-bottom:1px dotted var(--floor-line)
+  }
+  .servebox .sv:first-child{border-bottom:2px solid var(--text)}
+  .servebox .sv:last-child{border-bottom:0}
+  .sv-lbl{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--text-3);text-align:center;padding:1px 0;border-bottom:1px solid var(--line)}
+  .rule{
+    border-bottom:1px solid var(--rule);min-height:19px;font-size:12.5px;padding:1px 2px;
+    outline-offset:1px
+  }
+  .rule:empty::before{content:"";display:inline-block}
+
+  .boxes{display:flex;flex-direction:column;gap:7px}
+  .box{border:1px solid var(--text);display:grid;grid-template-columns:repeat(4,1fr)}
+  .cell{
+    border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+    min-height:17px;font-family:var(--mono);font-size:11px;text-align:center;padding:1px 2px
+  }
+  .cell:nth-child(4n){border-right:0}
+  .box .cell:nth-last-child(-n+4){border-bottom:0}
+  .cell.lbl{font-weight:700;background:var(--panel-2);color:var(--text);border-bottom:1px solid var(--text)}
+
+  /* ---------- court ---------- */
+  .courtbox{position:relative;width:100%;aspect-ratio:180/220;touch-action:none;user-select:none}
+  .courtbox svg{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+  .courtbox svg *{vector-effect:non-scaling-stroke}
+  .pl{
+    position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;
+    border:2px solid var(--player);background:var(--panel);color:var(--player);
+    display:grid;place-items:center;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.18)
+  }
+  .pl input{
+    width:100%;height:100%;border:0;background:transparent;text-align:center;
+    font-family:var(--mono);font-size:12px;font-weight:700;color:inherit;padding:0;
+    border-radius:50%;cursor:inherit
+  }
+  .pl input:focus{outline:none;background:var(--panel-2);cursor:text}
+  .pl.dragging{cursor:grabbing;box-shadow:0 3px 10px rgba(0,0,0,.28)}
+  .courtnote{font-family:var(--mono);font-size:9.5px;color:var(--text-3);text-align:center;margin:0}
+
+  .pnl-ft{display:flex;gap:6px;flex-wrap:wrap}
+  .pnl-ft button{font-size:11.5px;padding:4px 8px}
+  .tally{
+    margin-left:auto;display:flex;gap:9px;align-items:center;font-family:var(--mono);font-size:10.5px;
+    color:var(--text-2);font-variant-numeric:tabular-nums
+  }
+  .tally i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:3px}
+
+  .foot{
+    margin-top:26px;padding-top:12px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:10.5px;color:var(--text-3);line-height:1.75
+  }
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  @media print{
+    @page{size:letter portrait;margin:10mm}
+    body{background:#fff;font-size:11px}
+    .wrap{max-width:none;padding:0}
+    .toolbar,.hint,.pnl-ft,.foot{display:none}
+    .grid{grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .pnl{break-inside:avoid;box-shadow:none;border-color:#000;padding:7px;gap:6px}
+    .pl{box-shadow:none}
+  }
+</style>
+
+<div class="wrap">
+  <header class="sheet-hd">
+    <h1>6-Court Chart<small>play boxes with sets · defense</small></h1>
+    <div class="fld"><input class="team" id="us" placeholder="us"> vs <input class="team" id="them" placeholder="them"></div>
+    <div class="games" id="games"></div>
+    <div class="fld">DATE <input class="date" id="date" placeholder="dd mmm"></div>
+  </header>
+
+  <div class="toolbar">
+    <span class="tool-lbl">Attack line</span>
+    <div class="seg" id="shots">
+      <button type="button" data-t="hard" aria-pressed="true">Hard</button>
+      <button type="button" data-t="off" aria-pressed="false">Off-speed</button>
+      <button type="button" data-t="tip" aria-pressed="false">Tip</button>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="export">Export sheet</button>
+    <button type="button" id="import">Import sheet</button>
+    <button type="button" id="print">Print</button>
+    <button type="button" id="clearall">Clear sheet</button>
+  </div>
+
+  <p class="hint">
+    <b>Drag anywhere on a court</b> to draw an attack line — press where he contacts, release where the ball lands.
+    Colour comes from the switch above. <b>Click a line's landing dot</b> to delete it.<br>
+    <b>Drag a circle</b> to move a player; <b>click it once</b> and type to change his number.
+    Rotation label, ruled lines and every play box cell are editable. Everything saves in this browser —
+    <b>Export sheet</b> hands it to another coach.
+  </p>
+
+  <main class="grid" id="grid"></main>
+
+  <p class="foot">
+    Courts run the way the paper chart does: <b>they attack from the top toward you</b>, dotted 3-metre lines,
+    bold net. Their Z4 pin is on your right.<br>
+    Rebuilt from “6 Court Chart - Play Boxes with Sets - Defense - USA.pdf”.
+  </p>
+</div>
+
+<script>
+const KEY = "six-court-chart-v1";
+const C = {w:180, h:220, x0:8, x1:172, net:110, top:8, bot:212, three3:74, our3:146};
+const SHOTS = {hard:{label:"Hard", v:"--hard"}, off:{label:"Off-speed", v:"--off"}, tip:{label:"Tip", v:"--tip"}};
+
+/* six rotations, the way David lays them out: a team rotates backwards R1 → R6 → R5 → R4 → R3 → R2.
+   The paper sheet prints Red boxes on the first three courts and D boxes on the last three. */
+const ROTS = ["R1","R6","R5","R4","R3","R2"];
+const boxRows = sit => [
+  [sit, "F1",  "Bic", "Go"],
+  [sit, "Bic", "Gap", "Go"],
+  [sit, "B1",  "Bic", "Go"],
+  ["",   "",    "",    ""]
+];
+/* base 6: their front row on the near side of the net, back row behind it.
+   Their Z4 is on your right, so numbers read 4-3-2 right to left. */
+const BASE = [
+  {x:150, y:92}, {x: 90, y:92}, {x: 30, y:92},
+  {x:150, y:40}, {x: 90, y:40}, {x: 30, y:40}
+];
+const BASE_NUMS = ["4","3","2","5","6","1"];
+
+let shot = "hard";
+let state = load();
+
+function load(){
+  try{ const raw = localStorage.getItem(KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return {};
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function head(){
+  if(!state.head) state.head = {us:"", them:"", date:"", games:[false,false,false,false,false]};
+  return state.head;
+}
+function pnl(i){
+  if(!state.panels) state.panels = {};
+  if(!state.panels[i]) state.panels[i] = {
+    rot: ROTS[i],
+    server: "",
+    rules: ["","","","",""],
+    serve: ["",""],
+    boxes: boxRows(i < 3 ? "Red" : "D"),
+    players: BASE.map((b,k)=>({x:b.x, y:b.y, n:BASE_NUMS[k]})),
+    lines: []
+  };
+  return state.panels[i];
+}
+const el = (t,c,h)=>{ const e=document.createElement(t); if(c) e.className=c; if(h!=null) e.innerHTML=h; return e; };
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+/* ---------------------------------------------------------------- court */
+function courtSvg(){
+  const {x0,x1,net,top,bot,three3,our3} = C;
+  return `<svg viewBox="0 0 ${C.w} ${C.h}" preserveAspectRatio="none"
+      role="img" aria-label="Volleyball court. They attack from the top into your court at the bottom.">
+    <rect x="${x0}" y="${top}" width="${x1-x0}" height="${bot-top}" style="fill:var(--floor)"/>
+    <rect x="${x0}" y="${top}" width="${x1-x0}" height="${bot-top}"
+      style="fill:none;stroke:var(--floor-line);stroke-width:1.2"/>
+    <line x1="${x0}" y1="${three3}" x2="${x1}" y2="${three3}"
+      style="stroke:var(--floor-line);stroke-width:1;stroke-dasharray:2 2.5"/>
+    <line x1="${x0}" y1="${our3}" x2="${x1}" y2="${our3}"
+      style="stroke:var(--floor-line);stroke-width:1;stroke-dasharray:2 2.5"/>
+    <line x1="${x0-4}" y1="${net}" x2="${x1+4}" y2="${net}" style="stroke:var(--text);stroke-width:2.6"/>
+    <g class="lines"></g>
+    <g class="ghost"></g>
+  </svg>`;
+}
+
+function arrow(a, i, live){
+  const c = `var(${(SHOTS[a.t]||SHOTS.hard).v})`;
+  const dx = a.x2-a.x1, dy = a.y2-a.y1, len = Math.hypot(dx,dy) || 1;
+  const hx = a.x2 - dx/len*6, hy = a.y2 - dy/len*6;
+  const px = -dy/len*3, py = dx/len*3;
+  return `<g class="${live?"":"ln"}" ${live?"":`data-i="${i}"`} style="${live?"opacity:.55":""}">
+    <line x1="${a.x1}" y1="${a.y1}" x2="${hx.toFixed(1)}" y2="${hy.toFixed(1)}"
+      style="stroke:${c};stroke-width:1.9;stroke-linecap:round"/>
+    <polygon points="${a.x2},${a.y2} ${(hx+px).toFixed(1)},${(hy+py).toFixed(1)} ${(hx-px).toFixed(1)},${(hy-py).toFixed(1)}"
+      style="fill:${c}"/>
+    ${live?"":`<g class="kill" style="cursor:pointer"><title>Click to delete this line</title>
+      <circle cx="${a.x2}" cy="${a.y2}" r="5" style="fill:transparent"/>
+      <circle cx="${a.x2}" cy="${a.y2}" r="1.9" style="fill:${c};stroke:var(--panel);stroke-width:.8"/></g>`}
+  </g>`;
+}
+
+function drawLines(i, node){
+  const s = pnl(i);
+  node.querySelector(".lines").innerHTML = s.lines.map((a,k)=>arrow(a,k,false)).join("");
+  const counts = {hard:0, off:0, tip:0};
+  s.lines.forEach(a=>counts[a.t] = (counts[a.t]||0)+1);
+  node.querySelector(".tally").innerHTML =
+    Object.keys(SHOTS).map(k=>`<span><i style="background:var(${SHOTS[k].v})"></i>${counts[k]}</span>`).join("");
+}
+
+function placePlayers(i, node){
+  const s = pnl(i);
+  node.querySelectorAll(".pl").forEach((d,k)=>{
+    const p = s.players[k];
+    d.style.left = (p.x / C.w * 100) + "%";
+    d.style.top  = (p.y / C.h * 100) + "%";
+  });
+}
+
+/* ---------------------------------------------------------------- panel */
+function buildPanel(i){
+  const s = pnl(i);
+  const node = el("section","pnl");
+  node.innerHTML = `
+    <div class="pnl-hd">
+      <input class="rot" value="${esc(s.rot)}" aria-label="Rotation">
+      <span class="fld">server <input class="server" value="${esc(s.server)}" placeholder="#"></span>
+    </div>
+
+    <div class="hd-row">
+      <div class="rules">
+        ${s.rules.map((r,k)=>`<div class="rule" contenteditable="true" data-k="${k}">${esc(r)}</div>`).join("")}
+      </div>
+      <div class="servebox" title="Serve target">
+        <div class="sv-lbl">serve</div>
+        ${s.serve.map((v,k)=>
+          `<div class="sv" contenteditable="true" data-k="${k}">${esc(v)}</div>`).join("")}
+      </div>
+    </div>
+
+    <div class="boxes">
+      ${s.boxes.map((row,r)=>`<div class="box" data-r="${r}">
+        ${row.map((cellText,c)=>
+          `<div class="cell lbl" contenteditable="true" data-c="${c}">${esc(cellText)}</div>`).join("")}
+        ${[0,1,2,3].map(c=>`<div class="cell" contenteditable="true" data-fill="1" data-c="${c}"></div>`).join("")}
+        ${[0,1,2,3].map(c=>`<div class="cell" contenteditable="true" data-fill="2" data-c="${c}"></div>`).join("")}
+      </div>`).join("")}
+    </div>
+
+    <div class="courtbox">
+      ${courtSvg()}
+      ${s.players.map((p,k)=>
+        `<div class="pl" data-k="${k}"><input value="${esc(p.n)}" maxlength="2" inputmode="numeric"
+           aria-label="Player ${k+1} number"></div>`).join("")}
+    </div>
+    <p class="courtnote">they attack downward · their Z4 on your right</p>
+
+    <div class="pnl-ft">
+      <button type="button" class="undo">Undo line</button>
+      <button type="button" class="clr">Clear lines</button>
+      <button type="button" class="rst">Reset 6</button>
+      <span class="tally"></span>
+    </div>`;
+
+  const box = node.querySelector(".courtbox");
+  const svg = node.querySelector("svg");
+  const toCourt = ev=>{
+    const r = box.getBoundingClientRect();
+    return {x:(ev.clientX - r.left) / r.width * C.w, y:(ev.clientY - r.top) / r.height * C.h};
+  };
+  const clamp = q => ({
+    x: Math.max(0, Math.min(C.w, q.x)),
+    y: Math.max(0, Math.min(C.h, q.y))
+  });
+
+  /* draw an attack line by dragging across the court */
+  svg.addEventListener("pointerdown", ev=>{
+    if(ev.target.closest(".kill")) return;               // that click deletes instead
+    const from = clamp(toCourt(ev));
+    const ghost = svg.querySelector(".ghost");
+    let moved = false;
+    svg.setPointerCapture(ev.pointerId);
+    const onMove = e=>{
+      const to = clamp(toCourt(e));
+      if(!moved && Math.hypot(to.x-from.x, to.y-from.y) < 4) return;
+      moved = true;
+      ghost.innerHTML = arrow({x1:from.x, y1:from.y, x2:to.x, y2:to.y, t:shot}, -1, true);
+    };
+    const onUp = e=>{
+      svg.removeEventListener("pointermove", onMove);
+      svg.removeEventListener("pointerup", onUp);
+      svg.removeEventListener("pointercancel", onUp);
+      ghost.innerHTML = "";
+      if(moved){
+        const to = clamp(toCourt(e));
+        s.lines.push({x1:+from.x.toFixed(1), y1:+from.y.toFixed(1),
+                      x2:+to.x.toFixed(1),  y2:+to.y.toFixed(1), t:shot});
+        save(); drawLines(i, node);
+      }
+    };
+    svg.addEventListener("pointermove", onMove);
+    svg.addEventListener("pointerup", onUp);
+    svg.addEventListener("pointercancel", onUp);
+    ev.preventDefault();
+  });
+
+  svg.addEventListener("click", ev=>{
+    const g = ev.target.closest(".ln");
+    if(g && ev.target.closest(".kill")){
+      s.lines.splice(+g.dataset.i, 1); save(); drawLines(i, node);
+    }
+  });
+
+  /* drag a player; a click without movement puts the caret in his number */
+  node.querySelectorAll(".pl").forEach(d=>{
+    const k = +d.dataset.k;
+    d.addEventListener("pointerdown", ev=>{
+      const inp = d.querySelector("input");
+      if(document.activeElement === inp) return;        // already typing
+      const start = toCourt(ev), from = {x:s.players[k].x, y:s.players[k].y};
+      let moved = false;
+      d.setPointerCapture(ev.pointerId);
+      const onMove = e=>{
+        const q = toCourt(e);
+        if(!moved && Math.hypot(q.x-start.x, q.y-start.y) < 2) return;
+        moved = true; d.classList.add("dragging");
+        const p = clamp({x:from.x + q.x - start.x, y:from.y + q.y - start.y});
+        s.players[k].x = +p.x.toFixed(1); s.players[k].y = +p.y.toFixed(1);
+        placePlayers(i, node);
+      };
+      const onUp = ()=>{
+        d.removeEventListener("pointermove", onMove);
+        d.removeEventListener("pointerup", onUp);
+        d.removeEventListener("pointercancel", onUp);
+        d.classList.remove("dragging");
+        if(moved) save(); else { inp.focus(); inp.select(); }
+      };
+      d.addEventListener("pointermove", onMove);
+      d.addEventListener("pointerup", onUp);
+      d.addEventListener("pointercancel", onUp);
+      ev.preventDefault();
+    });
+    d.querySelector("input").addEventListener("input", e=>{
+      s.players[k].n = e.target.value.replace(/[^0-9]/g,"").slice(0,2);
+      if(e.target.value !== s.players[k].n) e.target.value = s.players[k].n;
+      save();
+    });
+  });
+
+  node.querySelector(".rot").addEventListener("input", e=>{ s.rot = e.target.value; save(); });
+  node.querySelector(".server").addEventListener("input", e=>{ s.server = e.target.value; save(); });
+  node.querySelectorAll(".rule").forEach(r=>{
+    r.addEventListener("input", ()=>{ s.rules[+r.dataset.k] = r.textContent; save(); });
+  });
+  node.querySelectorAll(".servebox .sv").forEach(v=>{
+    v.addEventListener("input", ()=>{ s.serve[+v.dataset.k] = v.textContent; save(); });
+  });
+  node.querySelectorAll(".box .cell.lbl").forEach(c=>{
+    c.addEventListener("input", ()=>{
+      s.boxes[+c.closest(".box").dataset.r][+c.dataset.c] = c.textContent; save();
+    });
+  });
+  node.querySelectorAll(".box .cell[data-fill]").forEach(c=>{
+    const r = +c.closest(".box").dataset.r, f = c.dataset.fill, col = +c.dataset.c;
+    if(!s.fill) s.fill = {};
+    const key = `${r}.${f}.${col}`;
+    if(s.fill[key]) c.textContent = s.fill[key];
+    c.addEventListener("input", ()=>{ s.fill[key] = c.textContent; save(); });
+  });
+
+  node.querySelector(".undo").addEventListener("click", ()=>{ s.lines.pop(); save(); drawLines(i, node); });
+  node.querySelector(".clr").addEventListener("click", ()=>{ s.lines = []; save(); drawLines(i, node); });
+  node.querySelector(".rst").addEventListener("click", ()=>{
+    s.players = BASE.map((b,k)=>({x:b.x, y:b.y, n:s.players[k] ? s.players[k].n : BASE_NUMS[k]}));
+    save(); placePlayers(i, node);
+  });
+
+  document.getElementById("grid").appendChild(node);
+  placePlayers(i, node);
+  drawLines(i, node);
+}
+
+/* ---------------------------------------------------------------- sheet */
+function buildHead(){
+  const h = head();
+  document.getElementById("us").value = h.us;
+  document.getElementById("them").value = h.them;
+  document.getElementById("date").value = h.date;
+  const g = document.getElementById("games");
+  g.innerHTML = [1,2,3,4,5].map(n=>
+    `<label>G${n}<input type="checkbox" data-g="${n-1}"${h.games[n-1]?" checked":""}></label>`).join("");
+  g.querySelectorAll("input").forEach(c=>c.addEventListener("change", ()=>{
+    head().games[+c.dataset.g] = c.checked; save();
+  }));
+  ["us","them","date"].forEach(id=>{
+    document.getElementById(id).addEventListener("input", e=>{ head()[id] = e.target.value; save(); });
+  });
+}
+
+function buildSheet(){
+  document.getElementById("grid").innerHTML = "";
+  for(let i=0;i<6;i++) buildPanel(i);
+  buildHead();
+}
+buildSheet();
+save();
+
+document.getElementById("shots").addEventListener("click", ev=>{
+  const b = ev.target.closest("button"); if(!b) return;
+  shot = b.dataset.t;
+  document.querySelectorAll("#shots button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+});
+document.getElementById("print").addEventListener("click", ()=>window.print());
+document.getElementById("export").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+  const a = el("a"); a.href = URL.createObjectURL(blob);
+  a.download = "6-court-chart.json"; a.click(); URL.revokeObjectURL(a.href);
+});
+document.getElementById("import").addEventListener("click", ()=>{
+  const inp = el("input"); inp.type = "file"; inp.accept = "application/json,.json";
+  inp.addEventListener("change", ()=>{
+    const f = inp.files && inp.files[0]; if(!f) return;
+    const fr = new FileReader();
+    fr.onload = ()=>{
+      try{ state = JSON.parse(fr.result); save(); buildSheet(); }
+      catch(e){ alert("That file isn't a sheet export — pick the JSON you downloaded with Export sheet."); }
+    };
+    fr.readAsText(f);
+  });
+  inp.click();
+});
+document.getElementById("clearall").addEventListener("click", ()=>{
+  if(!confirm("Clear every line, number and note on all six courts?")) return;
+  state = {}; save(); buildSheet();
+});
+</script>
