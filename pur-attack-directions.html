@@ -99,9 +99,34 @@ footer{border-top:1px solid var(--rule);padding-top:9px;font-size:10px;color:var
 footer b{color:var(--ink-2)}
 @media (max-width:1000px){.phases.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:820px){.phases.c3,.phases.c4{grid-template-columns:1fr}}
+/* On paper the courts get a fixed height and the four-court rows stay in one row, so a card
+   is one band and two of them clear a landscape page. Chrome's print scale cannot do this —
+   it reflows the layout wider and the height comes straight back. */
 @media print{body{background:#fff;padding:0}
-  .sheet{box-shadow:none;border:none;padding:0;gap:8px;max-width:none}
+  .sheet{box-shadow:none;border:none;padding:0;gap:7px;max-width:none}
   .card{break-inside:avoid}
+  .logoband{padding:0 0 4px;margin-bottom:0}
+  .logoband img{height:26px}
+  header{padding-bottom:5px}
+  h1{font-size:16px}
+  .eyebrow{font-size:8.5px}
+  .tot-hd{font-size:9.5px}
+  .tot-hd b{font-size:16px}
+  .note{padding:6px 10px;font-size:9.5px;line-height:1.5}
+  .card-hd{padding:3px 8px}
+  .card-hd .num{font-size:16px}
+  .card-hd .nm{font-size:12px}
+  .split{padding:2px 8px}
+  .splitlab{font-size:8.5px;line-height:1.4}
+  .phases{gap:5px;padding:5px}
+  .phases.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .phases.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .ph svg{height:176px;width:auto;margin:0 auto}
+  .ph-hd{padding:1px 5px}
+  .ph-ft,.ph-tz{font-size:8.5px}
+  table{font-size:9.5px}
+  th,td{padding:2px 6px}
+  footer{padding-top:6px;font-size:8px;line-height:1.5}
   @page{size:letter landscape;margin:.3in}}
 
 .logoband{display:flex;align-items:center;justify-content:center;gap:26px;
