@@ -251,10 +251,23 @@
   @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
   @media print{
+    @page{margin:11mm 9mm}
     body{background:#fff}
-    .toolbar,.photo .swap{display:none}
+    .toolbar,.photo .swap,.chips,.rowbtns,.courtnote{display:none}
     .card{break-inside:avoid;box-shadow:none}
     .grid{grid-template-columns:1fr 1fr}
+    /* claw back enough head room that the first row of cards lands on page one */
+    .wrap{padding:0}
+    .banner{margin-bottom:9px;padding:5px 8px}
+    .banner img{height:52px}
+    .mast{padding-bottom:9px}
+    .card-bd{grid-template-columns:minmax(0,200px) minmax(0,1fr)}
+    .tally{flex-wrap:wrap;gap:8px}
+    /* the note box is a scrolling textarea on screen; on paper it has to be
+       a plain blank ruled space, with no clipped placeholder bleeding through */
+    textarea{min-height:0;height:84px;overflow:hidden;resize:none;background:#fff;border-color:var(--line-soft)}
+    textarea::placeholder{color:transparent}
+    .foot{margin-top:14px}
   }
 </style>
 
